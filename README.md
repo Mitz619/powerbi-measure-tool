@@ -2,8 +2,8 @@
 
 A command-line tool for managing measures in **Power BI PBIP projects** using the TMDL format.
 
-[![PyPI version](https://badge.fury.io/py/powerbi-measure-tool.svg)](https://pypi.org/project/powerbi-measure-tool/)
-[![Python](https://img.shields.io/pypi/pyversions/powerbi-measure-tool)](https://pypi.org/project/powerbi-measure-tool/)
+[![PyPI version](https://img.shields.io/pypi/v/powerbi-measure-tool)](https://pypi.org/project/powerbi-measure-tool/)
+[![Python](https://img.shields.io/pypi/pyversions/powerbi-measure-tool?logo=python)](https://pypi.org/project/powerbi-measure-tool/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
