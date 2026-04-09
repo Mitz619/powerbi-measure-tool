@@ -29,3 +29,6 @@ htmlcov/
 
 # Windows
 Thumbs.db
+
+# Docs not for public repo
+PUBLISH.md
