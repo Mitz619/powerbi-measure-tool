@@ -168,19 +168,10 @@ The tool performs a multi-pass analysis:
 
 ---
 
-## CHANGELOG
+## Changelog
 
-### 0.1.0
-- Initial release
-- Clean mode: detect and delete unused measures
-- Copy mode: cherry-pick, range, or all measures
-- Auto-detect target structure (same project / same tables / different tables)
-- DAX formatting on write
-- `formatString` and `description` metadata preserved on copy
-- `--overwrite` flag
-- `--ignore-unapplied-filters` flag
+See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
----
 
 ## Contributing
 
