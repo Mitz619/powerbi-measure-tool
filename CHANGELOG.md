@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-04-09
+
+### Fixed
+- Added author metadata (name, email) to `pyproject.toml`
+- Fixed badge URLs in `README.md` (PyPI and Python version badges)
+
+---
+
 ## [0.1.0] - 2026-04-09
 
 ### Added
