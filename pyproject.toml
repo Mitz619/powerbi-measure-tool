@@ -4,11 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "powerbi-measure-tool"
-version = "0.1.0"
+version = "0.1.1"
 description = "Find, remove, and copy measures in Power BI PBIP/TMDL projects"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
+authors = [
+  { name = "Mithun K", email = "mithunkarthick7@hotmail.com" }
+]
 keywords = ["powerbi", "pbip", "tmdl", "dax", "measures", "power-bi"]
 classifiers = [
     "Development Status :: 4 - Beta",
