@@ -14,6 +14,7 @@ A command-line tool for managing measures in **Power BI PBIP projects** using th
 |------|-------------|
 | **Clean** | Scan for unused measures across your semantic model and optionally delete them |
 | **Copy** | Copy or move measures between projects or tables with automatic structure detection |
+| **Convert** | Convert between `.pbix` and project folders via the external [pbi-tools](https://pbi.tools) CLI |
 
 ### Copy mode scenarios (auto-detected)
 - **Same project → different table** — reorganise measures between tables
@@ -30,6 +31,9 @@ All measures are cleaned before writing: dedented, trailing whitespace removed, 
 - Python 3.8+
 - Power BI project saved in **PBIP format** with **TMDL** enabled
   *(File → Options → Preview features → Store semantic model in TMDL format)*
+- **Convert mode only:** the external [pbi-tools](https://pbi.tools) CLI on your
+  `PATH` (or pointed at via `--pbi-tools` / the `PBI_TOOLS_PATH` env var).
+  Clean and Copy modes have no such dependency.
 
 ---
 
@@ -65,7 +69,7 @@ pbi-measure ./MyWorkspace --execute --ignore-unapplied-filters
 **Example output:**
 ```
 ══════════════════════════════════════════════════════════════
-  Power BI Measure Tool  v0.1.0
+  Power BI Measure Tool  v0.2.0
 ══════════════════════════════════════════════════════════════
   Source Report : Sales Dashboard.Report
   Source SM     : Sales Dashboard.SemanticModel
@@ -140,6 +144,39 @@ pbi-measure ./MyWorkspace --copy --target ./MyWorkspace \
 
   Your selection: 1,2,4
 ```
+
+---
+
+### Convert mode — `.pbix` ↔ project folder
+
+Convert mode wraps the external [pbi-tools](https://pbi.tools) CLI, so it must be
+installed and on your `PATH` (or passed via `--pbi-tools` / `PBI_TOOLS_PATH`).
+Like the other modes, it is a **dry run by default** — it prints the exact
+`pbi-tools` command it would run, and only touches disk with `--execute`.
+
+```bash
+# Extract a .pbix into a source-control-friendly project folder (pbix → pbip)
+pbi-measure ./Report.pbix --to-pbip --out ./MyProject --execute
+
+# Compile a project folder back into a .pbix / .pbit (pbip → pbix)
+pbi-measure ./MyProject --to-pbix --out ./out --execute
+
+# Force a thin (report-only) project to compile to .pbix
+pbi-measure ./ThinReport --to-pbix --format pbix --overwrite --execute
+
+# Point at a specific pbi-tools executable
+pbi-measure ./Report.pbix --to-pbip --pbi-tools "C:/tools/pbi-tools.exe" --execute
+```
+
+**Honest caveats:**
+- `--to-pbip` produces pbi-tools' *PbixProj* (TMDL) layout — source-control
+  equivalent to Microsoft PBIP, but **not byte-identical** to Power BI Desktop's
+  "Save as .pbip" output.
+- `--to-pbix` **auto-detects** the format: a project containing a data model
+  compiles to a `.pbit` template (opening it in Desktop triggers a refresh),
+  while a report-only project compiles to a real `.pbix`. Regenerating a full
+  `.pbix` with embedded data requires Power BI Desktop and is out of scope for an
+  offline tool. Pass `--format pbix|pbit` to override auto-detection.
 
 ---
 

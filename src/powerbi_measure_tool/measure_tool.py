@@ -6,6 +6,7 @@ Modes
 ─────
   1. Analyse / Remove unused measures   (default)
   2. Copy measures between PBIP projects or tables   (--copy)
+  3. Convert .pbix ↔ project folder via pbi-tools   (--to-pbip / --to-pbix)
 
 Examples
 ────────
@@ -35,6 +36,30 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 import argparse
+
+try:
+    from .convert import (
+        COMPILE_FORMAT_CHOICES,
+        EXTRACT_MODE_CHOICES,
+        MODEL_SERIALIZATION_CHOICES,
+        ConversionError,
+        PbiToolsNotFoundError,
+        convert_pbip_to_pbix,
+        convert_pbix_to_pbip,
+    )
+except ImportError:  # allow running this file directly (python measure_tool.py)
+    from convert import (  # type: ignore
+        COMPILE_FORMAT_CHOICES,
+        EXTRACT_MODE_CHOICES,
+        MODEL_SERIALIZATION_CHOICES,
+        ConversionError,
+        PbiToolsNotFoundError,
+        convert_pbip_to_pbix,
+        convert_pbix_to_pbip,
+    )
+
+
+__version__ = "0.2.0"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -956,6 +981,11 @@ COPY MODE
   pbi-measure ./MyWorkspace --copy --target ./OtherWorkspace --measures "Revenue" "Cost"
   pbi-measure ./MyWorkspace --copy --target ./OtherWorkspace --all-measures --execute
   pbi-measure ./MyWorkspace --copy --target ./OtherWorkspace --all-measures --overwrite --execute
+
+CONVERT MODE (needs the external pbi-tools CLI: https://pbi.tools)
+  pbi-measure ./Report.pbix --to-pbip --out ./MyProject --execute
+  pbi-measure ./MyProject   --to-pbix --out ./out --execute
+  pbi-measure ./ThinReport  --to-pbix --format pbix --overwrite --execute
         """,
     )
 
@@ -978,9 +1008,75 @@ COPY MODE
                      help="Copy every measure from the source SemanticModel")
 
     copy.add_argument("--overwrite", action="store_true",
-                      help="Overwrite measures that already exist in the target")
+                      help="Overwrite measures that already exist in the target "
+                           "(also overwrites the compile output in convert mode)")
+
+    conv = parser.add_argument_group("Convert mode (requires the external pbi-tools CLI)")
+    direction = conv.add_mutually_exclusive_group()
+    direction.add_argument("--to-pbip", action="store_true",
+                           help="Convert a .pbix file (given as PATH) into a project folder")
+    direction.add_argument("--to-pbix", action="store_true",
+                           help="Compile a project folder (given as PATH) into a .pbix/.pbit")
+    conv.add_argument("--out", metavar="PATH",
+                      help="Output folder (--to-pbip) or output file/dir (--to-pbix)")
+    conv.add_argument("--model-serialization", default="Tmdl",
+                      choices=list(MODEL_SERIALIZATION_CHOICES),
+                      help="Model serialization for --to-pbip (default: Tmdl)")
+    conv.add_argument("--extract-mode", default="Auto",
+                      choices=list(EXTRACT_MODE_CHOICES),
+                      help="Extraction mode for --to-pbip (default: Auto)")
+    conv.add_argument("--format", dest="compile_format", default="auto",
+                      choices=["auto"] + [c.lower() for c in COMPILE_FORMAT_CHOICES],
+                      help="Compile format for --to-pbix (default: auto-detect)")
+    conv.add_argument("--pbi-tools", dest="pbi_tools", metavar="PATH",
+                      help="Path to the pbi-tools executable (overrides PATH / PBI_TOOLS_PATH)")
 
     return parser
+
+
+def _run_convert(args) -> int:
+    """Handle --to-pbip / --to-pbix conversion via the pbi-tools wrapper."""
+    print(f"\n{'═'*62}")
+    print(f"  Power BI Measure Tool — Convert  v{__version__}")
+    print(f"{'═'*62}")
+    mode_label = ("⚠️   EXECUTE — files will be written"
+                  if args.execute else "🔍  DRY RUN — no files will be written")
+    print(f"  Mode          : {mode_label}")
+    print(f"{'═'*62}\n")
+
+    out = Path(args.out) if args.out else None
+    try:
+        if args.to_pbip:
+            convert_pbix_to_pbip(
+                pbix_path=Path(args.path),
+                out_folder=out,
+                model_serialization=args.model_serialization,
+                mode=args.extract_mode,
+                execute=args.execute,
+                pbi_tools=args.pbi_tools,
+            )
+        else:  # args.to_pbix
+            convert_pbip_to_pbix(
+                project_folder=Path(args.path),
+                out_path=out,
+                fmt=args.compile_format,
+                overwrite=args.overwrite,
+                execute=args.execute,
+                pbi_tools=args.pbi_tools,
+            )
+    except PbiToolsNotFoundError as e:
+        print(f"\n❌  {e}", file=sys.stderr)
+        return 1
+    except FileNotFoundError as e:
+        print(f"\n❌  {e}", file=sys.stderr)
+        return 1
+    except ConversionError as e:
+        print(f"\n❌  {e}", file=sys.stderr)
+        return 1
+
+    if not args.execute:
+        print("\n  💡  Dry run complete — add --execute to perform the conversion.")
+    return 0
 
 
 def main() -> int:
@@ -990,11 +1086,17 @@ def main() -> int:
         print("❌  --copy requires --target <path>", file=sys.stderr)
         return 1
 
+    if args.to_pbip or args.to_pbix:
+        if args.copy:
+            print("❌  Convert mode cannot be combined with --copy", file=sys.stderr)
+            return 1
+        return _run_convert(args)
+
     try:
         source_report, source_sm = resolve_paths(args.path)
 
         print(f"\n{'═'*62}")
-        print(f"  Power BI Measure Tool  v0.1.0")
+        print(f"  Power BI Measure Tool  v{__version__}")
         print(f"{'═'*62}")
         print(f"  Source Report : {source_report.name}")
         print(f"  Source SM     : {source_sm.name if source_sm else 'NOT FOUND'}")

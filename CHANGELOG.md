@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-13
+
+### Added
+- **Convert mode** — convert between `.pbix` and project folders via the
+  external [pbi-tools](https://pbi.tools) CLI
+  - `--to-pbip` — extract a `.pbix` into a source-control-friendly PbixProj/TMDL
+    project folder (`pbi-tools extract`)
+  - `--to-pbix` — compile a project folder back into a `.pbix`/`.pbit`
+    (`pbi-tools compile`)
+  - Auto-detects the compile format: projects containing a data model produce a
+    `.pbit` template, report-only ("thin") projects produce a `.pbix`, with an
+    honest warning when `.pbix` is forced on a model project
+  - `--model-serialization`, `--extract-mode`, `--format`, `--out`, and
+    `--pbi-tools` flags; resolves the executable from `--pbi-tools`, the
+    `PBI_TOOLS_PATH` env var, or `PATH`
+  - Dry run by default (as with clean/copy modes); `--execute` performs the work
+
 ## [0.1.4] - 2026-04-09
 
 ### Fixed
